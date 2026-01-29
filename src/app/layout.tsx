@@ -1,13 +1,12 @@
 import React from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Figtree } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
-import { AppLayout } from "@/src/ui/Layout/appLayout";
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const _figtree = Figtree({ subsets: ["latin"] });
+// const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "FinTrack - Personal Finance Tracker",
@@ -21,16 +20,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${_geist.className} ${_geistMono.className} font-sans antialiased`}
-      >
+      <body className={`${_figtree.className} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
-          <AppLayout>{children}</AppLayout>
+          {children}
         </ThemeProvider>
         <Analytics />
       </body>
