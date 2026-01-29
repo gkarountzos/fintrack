@@ -1,8 +1,6 @@
 "use client";
 
-import React from "react";
-
-import { useState } from "react";
+import React, { useState, useTransition } from "react"; // Added useTransition
 import {
   Dialog,
   DialogContent,
@@ -23,6 +21,8 @@ import {
 } from "@/src/ui/ui/select";
 import { Textarea } from "@/src/ui/ui/textarea";
 import localization from "@/src/lib/localization.json";
+import { Loader2 } from "lucide-react";
+import { addIncomeAction } from "@/src/actions/income/incomeActions";
 
 interface AddIncomeDialogProps {
   open: boolean;
@@ -35,15 +35,31 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
+  const [isPending, startTransition] = useTransition();
+  const [errorMessage, setErrorMessage] = useState("");
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
 
-    // TODO: Add database integration here
-    onOpenChange(false);
-    setCategory("");
-    setAmount("");
-    setDescription("");
-    setDate(new Date().toISOString().split("T")[0]);
+    startTransition(async () => {
+      const result = await addIncomeAction({
+        category,
+        amount,
+        date,
+        description,
+      });
+
+      if (result.error) {
+        setErrorMessage(result.error);
+      } else {
+        onOpenChange(false);
+        setCategory("");
+        setAmount("");
+        setDescription("");
+        setDate(new Date().toISOString().split("T")[0]);
+      }
+    });
   };
 
   return (
@@ -54,7 +70,14 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
             <DialogTitle>{localization.income.addIncome}</DialogTitle>
             <DialogDescription>{localization.app.tagline}</DialogDescription>
           </DialogHeader>
+
           <div className="grid gap-4 py-4">
+            {errorMessage && (
+              <div className="text-sm text-red-500 font-medium">
+                {errorMessage}
+              </div>
+            )}
+
             <div className="grid gap-2">
               <Label htmlFor="category">{localization.income.category}</Label>
               <Select value={category} onValueChange={setCategory} required>
@@ -128,10 +151,14 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={isPending}
             >
               {localization.common.cancel}
             </Button>
-            <Button type="submit">{localization.common.save}</Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {localization.common.save}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

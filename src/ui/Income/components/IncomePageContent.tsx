@@ -1,26 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/ui/ui/card";
 import { Button } from "@/src/ui/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/ui/ui/tabs";
 import { Plus } from "lucide-react";
 import localization from "@/src/lib/localization.json";
 import { AddIncomeDialog } from "@/src/ui/Income/components/addIncomeDialog";
+import { TIncome } from "@/src/types/Income";
+import { IncomeList } from "@/src/ui/Income/components/IncomeList";
+import { CategoryGrid } from "@/src/ui/Income/components/CategoryGrid";
+import {
+  incomeTimePeriodMap,
+  incomeTimePeriods,
+} from "@/src/ui/Income/constants/incomeConstants";
 
-export function IncomePageContent() {
-  const [activeTab, setActiveTab] = useState("thisMonth");
+interface IIncomePageContentProps {
+  initialIncomes: TIncome[];
+}
+
+export function IncomePageContent({ initialIncomes }: IIncomePageContentProps) {
+  const [activeTab, setActiveTab] = useState(incomeTimePeriods.THIS_MONTH);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const categories = [
-    { name: localization.income.categories.salary, icon: "💼" },
-    { name: localization.income.categories.freelance, icon: "💻" },
-    { name: localization.income.categories.investment, icon: "📈" },
-    { name: localization.income.categories.business, icon: "🏢" },
-    { name: localization.income.categories.rental, icon: "🏠" },
-    { name: localization.income.categories.gift, icon: "🎁" },
-    { name: localization.income.categories.other, icon: "💰" },
-  ];
+  const filteredData = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return initialIncomes.filter((item) => {
+      const itemDate = new Date(item.date);
+      const itemMonth = itemDate.getMonth();
+      const itemYear = itemDate.getFullYear();
+
+      if (activeTab === incomeTimePeriods.THIS_MONTH) {
+        return itemMonth === currentMonth && itemYear === currentYear;
+      }
+      if (activeTab === incomeTimePeriods.LAST_MONTH) {
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear =
+          currentMonth === 0 ? currentYear - 1 : currentYear;
+        return itemMonth === lastMonth && itemYear === lastMonthYear;
+      }
+      if (activeTab === incomeTimePeriods.THIS_YEAR) {
+        return itemYear === currentYear;
+      }
+      return true;
+    });
+  }, [activeTab, initialIncomes]);
+
+  const totalAmount = filteredData.reduce((sum, item) => sum + item.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -43,12 +72,19 @@ export function IncomePageContent() {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            {localization.income.totalIncome}
+            Total (
+            {activeTab === incomeTimePeriods.THIS_MONTH
+              ? incomeTimePeriodMap[incomeTimePeriods.THIS_MONTH]
+              : activeTab === incomeTimePeriods.LAST_MONTH
+                ? incomeTimePeriodMap[incomeTimePeriods.LAST_MONTH]
+                : incomeTimePeriodMap[incomeTimePeriods.THIS_YEAR]}
+            )
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold">
-            {localization.common.currency}0.00
+            {localization.common.currency}
+            {totalAmount.toFixed(2)}
           </div>
         </CardContent>
       </Card>
@@ -60,180 +96,51 @@ export function IncomePageContent() {
         className="space-y-4"
       >
         <TabsList>
-          <TabsTrigger value="thisMonth">
+          <TabsTrigger value={incomeTimePeriods.THIS_MONTH}>
             {localization.income.thisMonth}
           </TabsTrigger>
-          <TabsTrigger value="lastMonth">
+          <TabsTrigger value={incomeTimePeriods.LAST_MONTH}>
             {localization.income.lastMonth}
           </TabsTrigger>
-          <TabsTrigger value="thisYear">
+          <TabsTrigger value={incomeTimePeriods.THIS_YEAR}>
             {localization.income.thisYear}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="thisMonth" className="space-y-4">
-          {/* Category Breakdown */}
+        <TabsContent value={incomeTimePeriods.THIS_MONTH} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>{localization.income.byCategory}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {categories.map((category) => (
-                  <Card key={category.name} className="border-2">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="text-2xl">{category.icon}</div>
-                          <div>
-                            <p className="text-sm font-medium">
-                              {category.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              0 entries
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold">
-                            {localization.common.currency}0.00
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <CategoryGrid filteredData={filteredData} />
             </CardContent>
           </Card>
-
-          {/* Income List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{localization.income.thisMonth}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                  <Plus className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <p className="text-lg font-medium text-muted-foreground">
-                  {localization.income.noIncome}
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {'Click "Add Income" to record your first entry'}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <IncomeList filteredData={filteredData} activeTab={activeTab} />
         </TabsContent>
 
-        <TabsContent value="lastMonth" className="space-y-4">
-          {/* Category Breakdown */}
+        <TabsContent value={incomeTimePeriods.LAST_MONTH} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>{localization.income.byCategory}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {categories.map((category) => (
-                  <Card key={category.name} className="border-2">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="text-2xl">{category.icon}</div>
-                          <div>
-                            <p className="text-sm font-medium">
-                              {category.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              0 entries
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold">
-                            {localization.common.currency}0.00
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <CategoryGrid filteredData={filteredData} />
             </CardContent>
           </Card>
-
-          {/* Income List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{localization.income.lastMonth}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                  <Plus className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <p className="text-lg font-medium text-muted-foreground">
-                  {localization.income.noIncome}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <IncomeList filteredData={filteredData} activeTab={activeTab} />
         </TabsContent>
 
-        <TabsContent value="thisYear" className="space-y-4">
-          {/* Category Breakdown */}
+        <TabsContent value={incomeTimePeriods.THIS_YEAR} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>{localization.income.byCategory}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {categories.map((category) => (
-                  <Card key={category.name} className="border-2">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="text-2xl">{category.icon}</div>
-                          <div>
-                            <p className="text-sm font-medium">
-                              {category.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              0 entries
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold">
-                            {localization.common.currency}0.00
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <CategoryGrid filteredData={filteredData} />
             </CardContent>
           </Card>
-
-          {/* Income List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{localization.income.thisYear}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                  <Plus className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <p className="text-lg font-medium text-muted-foreground">
-                  {localization.income.noIncome}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <IncomeList filteredData={filteredData} activeTab={activeTab} />
         </TabsContent>
       </Tabs>
     </div>
