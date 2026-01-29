@@ -5,7 +5,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/src/ui/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/src/ui/ui/sheet";
 import localization from "@/src/lib/localization.json";
-import { SidebarNav } from "@/src/ui/sidebarNav";
+import { SidebarNav } from "@/src/ui/Layout/sidebarNav";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);

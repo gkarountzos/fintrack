@@ -1,8 +1,8 @@
 import React from "react";
 import localization from "@/src/lib/localization.json";
-import { SidebarNav } from "@/src/ui/sidebarNav";
 import { MobileNav } from "@/src/ui/Layout/mobileNav";
 import { ThemeToggle } from "@/src/ui/shared/themeToggle";
+import { SidebarNav } from "@/src/ui/Layout/sidebarNav";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
