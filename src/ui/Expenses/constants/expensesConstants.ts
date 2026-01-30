@@ -32,13 +32,8 @@ export const expensesCategories = [
     color: "bg-yellow-500",
   },
   {
-    name: localization.expenses.categoryLabels.groceries,
-    value: "groceries",
-    color: "bg-cyan-500",
-  },
-  {
-    name: localization.expenses.categoryLabels.other,
-    value: "other",
+    name: localization.expenses.categoryLabels.misc,
+    value: "misc",
     color: "bg-gray-500",
   },
 ];

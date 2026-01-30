@@ -79,14 +79,13 @@
     "showingExpensesFor": "Showing expenses for",
     "breakdownFor": "Breakdown by category for",
     "categoryLabels": {
-      "food": "Food & Dining",
+      "food": "Food & Drinks",
       "transport": "Transportation",
-      "shopping": "Shopping",
-      "entertainment": "Entertainment",
-      "health": "Health & Wellness",
-      "bills": "Bills & Payments",
-      "groceries": "Groceries",
-      "other": "Other"
+      "shopping": "Shopping & Household",
+      "entertainment": "Entertainment & Leisure",
+      "health": "Personal Care & Health",
+      "bills": "Housing & Utilities",
+      "misc": "Miscellaneous"
     },
     "categories": {
       "food": "Food",
@@ -94,27 +93,9 @@
       "shopping": "Shopping",
       "entertainment": "Entertainment",
       "health": "Health",
-      "bills": "Bills",
-      "groceries": "Groceries",
-      "other": "Other"
+      "bills": "Housing",
+      "misc": "Miscellaneous"
     }
-  },
-  "utilities": {
-    "title": "Utilities",
-    "electricity": "Electricity",
-    "water": "Water",
-    "gas": "Gas",
-    "internet": "Internet",
-    "phone": "Phone",
-    "totalUtilities": "Total Utilities",
-    "dueDate": "Due Date",
-    "paid": "Paid",
-    "unpaid": "Unpaid",
-    "noUtilities": "No utility bills",
-    "addUtility": "Add Utility Bill",
-    "recentBills": "Recent Bills",
-    "recentBillsDescription": "Your latest utility bills and payments",
-    "addUtilitiesMessage": "Start adding your utility bills to track and manage them easily"
   },
   "savings": {
     "title": "Savings",

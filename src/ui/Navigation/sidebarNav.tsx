@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   TrendingUp,
   Receipt,
-  Zap,
   PiggyBank,
   BarChart3,
   Calculator,
@@ -29,11 +28,6 @@ const navItems = [
     title: localization.nav.expenses,
     href: "/expenses",
     icon: Receipt,
-  },
-  {
-    title: localization.nav.utilities,
-    href: "/utilities",
-    icon: Zap,
   },
   {
     title: localization.nav.savings,

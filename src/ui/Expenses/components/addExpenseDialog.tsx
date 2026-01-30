@@ -23,25 +23,12 @@ import { Textarea } from "@/src/ui/ui/textarea";
 import localization from "@/src/lib/localization.json";
 import { Loader2 } from "lucide-react";
 import { addExpenseAction } from "@/src/actions/expenses/expensesActions";
+import { expensesCategories } from "@/src/ui/Expenses/constants/expensesConstants";
 
 interface AddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const expenseCategories = [
-  { value: "food", label: localization.expenses.categoryLabels.food },
-  { value: "transport", label: localization.expenses.categoryLabels.transport },
-  { value: "shopping", label: localization.expenses.categoryLabels.shopping },
-  {
-    value: "entertainment",
-    label: localization.expenses.categoryLabels.entertainment,
-  },
-  { value: "health", label: localization.expenses.categoryLabels.health },
-  { value: "bills", label: localization.expenses.categoryLabels.bills },
-  { value: "groceries", label: localization.expenses.categoryLabels.groceries },
-  { value: "other", label: localization.expenses.categoryLabels.other },
-];
 
 export function AddExpenseDialog({
   open,
@@ -93,9 +80,9 @@ export function AddExpenseDialog({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {expenseCategories.map((cat) => (
+                  {expensesCategories.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
+                      {cat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
