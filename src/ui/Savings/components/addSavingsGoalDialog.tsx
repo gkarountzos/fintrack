@@ -1,8 +1,6 @@
 "use client";
 
-import React from "react";
-
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +14,8 @@ import { Input } from "@/src/ui/ui/input";
 import { Label } from "@/src/ui/ui/label";
 import { Textarea } from "@/src/ui/ui/textarea";
 import localization from "@/src/lib/localization.json";
+import { Loader2 } from "lucide-react";
+import { addSavingsGoalAction } from "@/src/actions/savings/savingsActions";
 
 interface AddSavingsGoalDialogProps {
   open: boolean;
@@ -31,16 +31,27 @@ export function AddSavingsGoalDialog({
   const [currentAmount, setCurrentAmount] = useState("");
   const [description, setDescription] = useState("");
 
+  const [isPending, startTransition] = useTransition();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // TODO: Add database integration here
-    onOpenChange(false);
-    // Reset form
-    setGoalName("");
-    setTargetAmount("");
-    setCurrentAmount("");
-    setDescription("");
+    startTransition(async () => {
+      const result = await addSavingsGoalAction({
+        name: goalName,
+        targetAmount,
+        currentAmount,
+        description,
+      });
+
+      if (!result.error) {
+        onOpenChange(false);
+        setGoalName("");
+        setTargetAmount("");
+        setCurrentAmount("");
+        setDescription("");
+      }
+    });
   };
 
   return (
@@ -108,10 +119,14 @@ export function AddSavingsGoalDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={isPending}
             >
               {localization.common.cancel}
             </Button>
-            <Button type="submit">{localization.common.save}</Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {localization.common.save}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
