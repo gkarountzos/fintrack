@@ -1,8 +1,6 @@
 "use client";
 
-import React from "react";
-
-import { useState } from "react";
+import React, { useState, useTransition } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +21,8 @@ import {
 } from "@/src/ui/ui/select";
 import { Textarea } from "@/src/ui/ui/textarea";
 import localization from "@/src/lib/localization.json";
+import { Loader2 } from "lucide-react";
+import { addExpenseAction } from "@/src/actions/expenses/expensesActions";
 
 interface AddExpenseDialogProps {
   open: boolean;
@@ -52,16 +52,27 @@ export function AddExpenseDialog({
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
+  const [isPending, startTransition] = useTransition();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // TODO: Add database integration here
-    onOpenChange(false);
-    // Reset form
-    setCategory("");
-    setAmount("");
-    setDescription("");
-    setDate(new Date().toISOString().split("T")[0]);
+    startTransition(async () => {
+      const result = await addExpenseAction({
+        category,
+        amount,
+        date,
+        description,
+      });
+
+      if (!result.error) {
+        onOpenChange(false);
+        setCategory("");
+        setAmount("");
+        setDescription("");
+        setDate(new Date().toISOString().split("T")[0]);
+      }
+    });
   };
 
   return (
@@ -130,10 +141,14 @@ export function AddExpenseDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={isPending}
             >
               {localization.common.cancel}
             </Button>
-            <Button type="submit">{localization.common.save}</Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {localization.common.save}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

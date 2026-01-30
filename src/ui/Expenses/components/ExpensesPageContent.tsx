@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -21,6 +21,15 @@ import {
 import { Plus, TrendingDown, Calendar } from "lucide-react";
 import localization from "@/src/lib/localization.json";
 import { AddExpenseDialog } from "@/src/ui/Expenses/components/addExpenseDialog";
+import { expensesCategories } from "@/src/ui/Expenses/constants/expensesConstants";
+
+type Expense = {
+  id: string;
+  category: string;
+  amount: number;
+  date: string;
+  description: string;
+};
 
 type TimePeriod =
   | "today"
@@ -31,53 +40,89 @@ type TimePeriod =
   | "last3Months"
   | "thisYear";
 
-export function ExpensesPageContent() {
+interface ExpensesPageContentProps {
+  initialExpenses: Expense[];
+}
+
+export function ExpensesPageContent({
+  initialExpenses,
+}: ExpensesPageContentProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("thisMonth");
   const [activeTab, setActiveTab] = useState("overview");
 
-  const categories = [
-    {
-      name: localization.expenses.categoryLabels.food,
-      value: "food",
-      color: "bg-blue-500",
-    },
-    {
-      name: localization.expenses.categoryLabels.transport,
-      value: "transport",
-      color: "bg-green-500",
-    },
-    {
-      name: localization.expenses.categoryLabels.shopping,
-      value: "shopping",
-      color: "bg-purple-500",
-    },
-    {
-      name: localization.expenses.categoryLabels.entertainment,
-      value: "entertainment",
-      color: "bg-pink-500",
-    },
-    {
-      name: localization.expenses.categoryLabels.health,
-      value: "health",
-      color: "bg-red-500",
-    },
-    {
-      name: localization.expenses.categoryLabels.bills,
-      value: "bills",
-      color: "bg-yellow-500",
-    },
-    {
-      name: localization.expenses.categoryLabels.groceries,
-      value: "groceries",
-      color: "bg-cyan-500",
-    },
-    {
-      name: localization.expenses.categoryLabels.other,
-      value: "other",
-      color: "bg-gray-500",
-    },
-  ];
+  const filteredExpenses = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    return initialExpenses.filter((expense) => {
+      const expenseDate = new Date(expense.date);
+
+      switch (timePeriod) {
+        case "today": {
+          const todayStr = now.toISOString().split("T")[0];
+          return expense.date === todayStr;
+        }
+        case "yesterday": {
+          const yesterday = new Date(now);
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yStr = yesterday.toISOString().split("T")[0];
+          return expense.date === yStr;
+        }
+        case "thisWeek": {
+          const firstDay = new Date(now);
+          firstDay.setDate(now.getDate() - now.getDay());
+          return expenseDate >= firstDay;
+        }
+        case "thisMonth": {
+          return (
+            expenseDate.getMonth() === now.getMonth() &&
+            expenseDate.getFullYear() === now.getFullYear()
+          );
+        }
+        case "lastMonth": {
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          return (
+            expenseDate.getMonth() === lastMonth.getMonth() &&
+            expenseDate.getFullYear() === lastMonth.getFullYear()
+          );
+        }
+        case "last3Months": {
+          const threeMonthsAgo = new Date(now);
+          threeMonthsAgo.setMonth(now.getMonth() - 3);
+          return expenseDate >= threeMonthsAgo;
+        }
+        case "thisYear": {
+          return expenseDate.getFullYear() === now.getFullYear();
+        }
+        default:
+          return true;
+      }
+    });
+  }, [timePeriod, initialExpenses]);
+
+  const totalSpent = filteredExpenses.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  );
+  const totalTransactions = filteredExpenses.length;
+
+  const averageDaily = useMemo(() => {
+    if (totalSpent === 0) return 0;
+
+    const now = new Date();
+    let divisor = 1;
+
+    if (timePeriod === "thisMonth") divisor = now.getDate();
+    else if (timePeriod === "thisWeek") divisor = now.getDay() + 1;
+    else if (timePeriod === "thisYear") {
+      const start = new Date(now.getFullYear(), 0, 0);
+      const diff = now.getTime() - start.getTime();
+      divisor = Math.floor(diff / (1000 * 60 * 60 * 24));
+    }
+
+    return totalSpent / (divisor || 1);
+  }, [timePeriod, totalSpent]);
 
   return (
     <div className="space-y-6">
@@ -144,7 +189,8 @@ export function ExpensesPageContent() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {localization.common.currency}0.00
+              {localization.common.currency}
+              {totalSpent.toFixed(2)}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               For {localization.expenses.periods[timePeriod].toLowerCase()}
@@ -160,9 +206,12 @@ export function ExpensesPageContent() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {localization.common.currency}0.00
+              {localization.common.currency}
+              {averageDaily.toFixed(2)}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Daily average</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Daily average (Est.)
+            </p>
           </CardContent>
         </Card>
 
@@ -187,7 +236,9 @@ export function ExpensesPageContent() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">0</div>
+            <div className="text-2xl font-bold text-foreground">
+              {totalTransactions}
+            </div>
             <p className="mt-1 text-xs text-muted-foreground">
               Total transactions
             </p>
@@ -215,12 +266,42 @@ export function ExpensesPageContent() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Empty>
-                <EmptyTitle>{localization.expenses.noExpenses}</EmptyTitle>
-                <EmptyDescription>
-                  {`${localization.expenses.addFirstExpense} ${localization.expenses.periods[timePeriod].toLowerCase()}`}
-                </EmptyDescription>
-              </Empty>
+              {filteredExpenses.length === 0 ? (
+                <Empty>
+                  <EmptyTitle>{localization.expenses.noExpenses}</EmptyTitle>
+                  <EmptyDescription>
+                    {`${localization.expenses.addFirstExpense} ${localization.expenses.periods[timePeriod].toLowerCase()}`}
+                  </EmptyDescription>
+                </Empty>
+              ) : (
+                <div className="space-y-4">
+                  {filteredExpenses.map((expense) => (
+                    <div
+                      key={expense.id}
+                      className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                    >
+                      <div className="grid gap-1">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`h-2 w-2 rounded-full ${expensesCategories.find((c) => c.value === expense.category)?.color || "bg-gray-500"}`}
+                          />
+                          <p className="text-sm font-medium leading-none capitalize">
+                            {expense.category}
+                          </p>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(expense.date).toLocaleDateString()}
+                          {expense.description && ` • ${expense.description}`}
+                        </p>
+                      </div>
+                      <div className="font-bold">
+                        {localization.common.currency}
+                        {expense.amount.toFixed(2)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -235,32 +316,42 @@ export function ExpensesPageContent() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
-                {categories.map((category) => (
-                  <Card key={category.value}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <div
-                          className={`h-3 w-3 rounded-full ${category.color}`}
-                        />
-                        {category.name}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-foreground">
-                        {localization.common.currency}0.00
-                      </div>
-                      <div className="mt-2 h-2 w-full rounded-full bg-muted">
-                        <div
-                          className={`h-full rounded-full ${category.color}`}
-                          style={{ width: "0%" }}
-                        />
-                      </div>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {`0${localization.common.ofTotal}`}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
+                {expensesCategories.map((category) => {
+                  const catTotal = filteredExpenses
+                    .filter((e) => e.category === category.value)
+                    .reduce((sum, e) => sum + e.amount, 0);
+
+                  const percent =
+                    totalSpent > 0 ? (catTotal / totalSpent) * 100 : 0;
+
+                  return (
+                    <Card key={category.value}>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          <div
+                            className={`h-3 w-3 rounded-full ${category.color}`}
+                          />
+                          {category.name}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-foreground">
+                          {localization.common.currency}
+                          {catTotal.toFixed(2)}
+                        </div>
+                        <div className="mt-2 h-2 w-full rounded-full bg-muted">
+                          <div
+                            className={`h-full rounded-full ${category.color}`}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {`${percent.toFixed(1)}% ${localization.common.ofTotal}`}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

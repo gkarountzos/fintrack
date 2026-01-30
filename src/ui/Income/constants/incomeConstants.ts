@@ -1,6 +1,6 @@
 import localization from "@/src/lib/localization.json";
 
-export const categories = [
+export const incomeCategories = [
   {
     name: localization.income.categories.salary,
     value: "salary",

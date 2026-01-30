@@ -1,4 +1,4 @@
-import { categories } from "@/src/ui/Income/constants/incomeConstants";
+import { incomeCategories } from "@/src/ui/Income/constants/incomeConstants";
 import {
   getCategoryCount,
   getCategoryTotal,
@@ -14,7 +14,7 @@ interface ICategoryGridProps {
 export const CategoryGrid = ({ filteredData }: ICategoryGridProps) => {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {categories.map((category) => {
+      {incomeCategories.map((category) => {
         const catTotal = getCategoryTotal(category.value, filteredData);
         const catCount = getCategoryCount(category.value, filteredData);
 
