@@ -50,12 +50,11 @@ export default function TaxPlannerPageContent() {
             </CardHeader>
             <CardContent>
               <div className="relative">
-                <span className="absolute left-3 top-3 text-muted-foreground">
+                <span className="absolute left-3 top-1.5 text-muted-foreground">
                   {localization.common.currency}
                 </span>
                 <Input
                   type="number"
-                  placeholder="0"
                   value={grossSalary || ""}
                   onChange={(e) => setGrossSalary(Number(e.target.value))}
                   className="pl-8 text-lg"
