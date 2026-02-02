@@ -24,8 +24,12 @@ import localization from "@/src/lib/localization.json";
 import { Loader2 } from "lucide-react";
 import { addExpenseAction } from "@/src/actions/expenses/expensesActions";
 import { expensesCategories } from "@/src/ui/Expenses/constants/expensesConstants";
+import {
+  transactionSchema,
+  TTransactionSchemaValues,
+} from "@/src/schemas/transactionSchema";
 
-interface AddExpenseDialogProps {
+interface IAddExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -33,26 +37,54 @@ interface AddExpenseDialogProps {
 export function AddExpenseDialog({
   open,
   onOpenChange,
-}: AddExpenseDialogProps) {
+}: IAddExpenseDialogProps) {
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
   const [isPending, startTransition] = useTransition();
+  const [serverError, setServerError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof TTransactionSchemaValues, string>>
+  >({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setServerError("");
+    setFieldErrors({});
+
+    // 3. Validate Data
+    const result = transactionSchema.safeParse({
+      category,
+      amount: parseFloat(amount),
+      date,
+      description,
+    });
+
+    if (!result.success) {
+      const formattedErrors: Partial<
+        Record<keyof TTransactionSchemaValues, string>
+      > = {};
+      result.error.issues.forEach((issue) => {
+        const path = issue.path[0] as keyof TTransactionSchemaValues;
+        formattedErrors[path] = issue.message;
+      });
+      setFieldErrors(formattedErrors);
+      return;
+    }
 
     startTransition(async () => {
-      const result = await addExpenseAction({
-        category,
-        amount,
-        date,
-        description,
+      const response = await addExpenseAction({
+        category: result.data.category,
+        amount: result.data.amount.toString(),
+        date: result.data.date,
+        description: result.data.description || "",
       });
 
-      if (!result.error) {
+      if (response?.error) {
+        setServerError(response.error);
+      } else {
         onOpenChange(false);
         setCategory("");
         setAmount("");
@@ -70,11 +102,26 @@ export function AddExpenseDialog({
             <DialogTitle>{localization.expenses.addExpense}</DialogTitle>
             <DialogDescription>{localization.app.tagline}</DialogDescription>
           </DialogHeader>
+
           <div className="grid gap-4 py-4">
+            {serverError && (
+              <div className="text-sm text-red-500 font-medium">
+                {serverError}
+              </div>
+            )}
+
             <div className="grid gap-2">
-              <Label htmlFor="category">{localization.expenses.category}</Label>
-              <Select value={category} onValueChange={setCategory} required>
-                <SelectTrigger id="category">
+              <Label
+                htmlFor="category"
+                className={fieldErrors.category ? "text-red-500" : ""}
+              >
+                {localization.expenses.category}
+              </Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger
+                  id="category"
+                  className={fieldErrors.category ? "border-red-500" : ""}
+                >
                   <SelectValue
                     placeholder={localization.common.selectCategory}
                   />
@@ -87,9 +134,20 @@ export function AddExpenseDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {fieldErrors.category && (
+                <span className="text-xs text-red-500">
+                  {fieldErrors.category}
+                </span>
+              )}
             </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="amount">{localization.expenses.amount}</Label>
+              <Label
+                htmlFor="amount"
+                className={fieldErrors.amount ? "text-red-500" : ""}
+              >
+                {localization.expenses.amount}
+              </Label>
               <Input
                 id="amount"
                 type="number"
@@ -97,19 +155,34 @@ export function AddExpenseDialog({
                 placeholder={localization.common.enterAmount}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                required
+                className={fieldErrors.amount ? "border-red-500" : ""}
               />
+              {fieldErrors.amount && (
+                <span className="text-xs text-red-500">
+                  {fieldErrors.amount}
+                </span>
+              )}
             </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="date">{localization.expenses.date}</Label>
+              <Label
+                htmlFor="date"
+                className={fieldErrors.date ? "text-red-500" : ""}
+              >
+                {localization.expenses.date}
+              </Label>
               <Input
                 id="date"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                required
+                className={fieldErrors.date ? "border-red-500" : ""}
               />
+              {fieldErrors.date && (
+                <span className="text-xs text-red-500">{fieldErrors.date}</span>
+              )}
             </div>
+
             <div className="grid gap-2">
               <Label htmlFor="description">
                 {localization.expenses.description}

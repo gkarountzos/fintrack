@@ -30,7 +30,7 @@ export function ExpensesCategoryCard({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           {expensesCategories.map((category) => {
             const catTotal = filteredExpenses
               .filter((e) => e.category === category.value)

@@ -14,10 +14,11 @@
   },
   "overview": {
     "title": "Overview",
+    "pageDescription": "Your financial snapshot at a glance",
     "totalBalance": "Total Balance",
-    "monthlyIncome": "Monthly Income",
-    "monthlyExpenses": "Monthly Expenses",
-    "monthlySavings": "Monthly Savings",
+    "monthlyIncome": "Avg. Monthly Income (Last 12 Months)",
+    "monthlyExpenses": "Avg. Monthly Expenses (Last 12 Months)",
+    "monthlySavings": "Avg. Monthly Savings (Last 12 Months)",
     "recentTransactions": "Recent Transactions",
     "quickStats": "Quick Stats",
     "noTransactions": "No transactions yet",
@@ -28,6 +29,7 @@
   },
   "income": {
     "title": "Income",
+    "pageDescription": "Manage and track your income sources",
     "addIncome": "Add Income",
     "category": "Category",
     "amount": "Amount",
@@ -81,7 +83,7 @@
     "categoryLabels": {
       "food": "Food & Drinks",
       "transport": "Transportation",
-      "shopping": "Shopping & Household",
+      "shopping": "Shopping",
       "entertainment": "Entertainment & Leisure",
       "health": "Personal Care & Health",
       "bills": "Housing & Utilities",

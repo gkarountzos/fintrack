@@ -23,35 +23,63 @@ import { Textarea } from "@/src/ui/ui/textarea";
 import localization from "@/src/lib/localization.json";
 import { Loader2 } from "lucide-react";
 import { addIncomeAction } from "@/src/actions/income/incomeActions";
+import {
+  transactionSchema,
+  TTransactionSchemaValues,
+} from "@/src/schemas/transactionSchema";
 
-interface AddIncomeDialogProps {
+interface IAddIncomeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
+export function AddIncomeDialog({ open, onOpenChange }: IAddIncomeDialogProps) {
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
   const [isPending, startTransition] = useTransition();
-  const [errorMessage, setErrorMessage] = useState("");
+  const [serverError, setServerError] = useState("");
+
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof TTransactionSchemaValues, string>>
+  >({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage("");
+    setServerError("");
+    setFieldErrors({});
+
+    const result = transactionSchema.safeParse({
+      category,
+      amount: parseFloat(amount),
+      date,
+      description,
+    });
+
+    if (!result.success) {
+      const formattedErrors: Partial<
+        Record<keyof TTransactionSchemaValues, string>
+      > = {};
+      result.error.issues.forEach((issue) => {
+        const path = issue.path[0] as keyof TTransactionSchemaValues;
+        formattedErrors[path] = issue.message;
+      });
+      setFieldErrors(formattedErrors);
+      return;
+    }
 
     startTransition(async () => {
-      const result = await addIncomeAction({
-        category,
-        amount,
-        date,
-        description,
+      const response = await addIncomeAction({
+        category: result.data.category,
+        amount: result.data.amount.toString(),
+        date: result.data.date,
+        description: result.data.description || "",
       });
 
-      if (result.error) {
-        setErrorMessage(result.error);
+      if (response.error) {
+        setServerError(response.error);
       } else {
         onOpenChange(false);
         setCategory("");
@@ -60,6 +88,10 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
         setDate(new Date().toISOString().split("T")[0]);
       }
     });
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAmount(e.target.value);
   };
 
   return (
@@ -72,16 +104,24 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            {errorMessage && (
+            {serverError && (
               <div className="text-sm text-red-500 font-medium">
-                {errorMessage}
+                {serverError}
               </div>
             )}
 
             <div className="grid gap-2">
-              <Label htmlFor="category">{localization.income.category}</Label>
-              <Select value={category} onValueChange={setCategory} required>
-                <SelectTrigger id="category">
+              <Label
+                htmlFor="category"
+                className={fieldErrors.category ? "text-red-500" : ""}
+              >
+                {localization.income.category}
+              </Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger
+                  id="category"
+                  className={fieldErrors.category ? "border-red-500" : ""}
+                >
                   <SelectValue
                     placeholder={localization.common.selectCategory}
                   />
@@ -110,29 +150,55 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
                   </SelectItem>
                 </SelectContent>
               </Select>
+              {fieldErrors.category && (
+                <span className="text-xs text-red-500">
+                  {fieldErrors.category}
+                </span>
+              )}
             </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="amount">{localization.income.amount}</Label>
+              <Label
+                htmlFor="amount"
+                className={fieldErrors.amount ? "text-red-500" : ""}
+              >
+                {localization.income.amount}
+              </Label>
               <Input
                 id="amount"
                 type="number"
                 step="0.01"
                 placeholder={localization.common.enterAmount}
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
+                onChange={handleAmountChange}
+                className={fieldErrors.amount ? "border-red-500" : ""}
               />
+              {fieldErrors.amount && (
+                <span className="text-xs text-red-500">
+                  {fieldErrors.amount}
+                </span>
+              )}
             </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="date">{localization.income.date}</Label>
+              <Label
+                htmlFor="date"
+                className={fieldErrors.date ? "text-red-500" : ""}
+              >
+                {localization.income.date}
+              </Label>
               <Input
                 id="date"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                required
+                className={fieldErrors.date ? "border-red-500" : ""}
               />
+              {fieldErrors.date && (
+                <span className="text-xs text-red-500">{fieldErrors.date}</span>
+              )}
             </div>
+
             <div className="grid gap-2">
               <Label htmlFor="description">
                 {localization.income.description}

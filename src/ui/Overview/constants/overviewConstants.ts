@@ -1,29 +1,27 @@
+import { formatCurrency } from "@/src/lib/calculateProgressiveTax";
 import localization from "@/src/lib/localization.json";
+import { TDashboardStats } from "@/src/types/Dashboard";
 import { DollarSign, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 
-export const overviewStats = [
+export const overviewStats = (statsData: TDashboardStats) => [
   {
     title: localization.overview.totalBalance,
-    value: "",
+    value: formatCurrency(statsData.totalBalance),
     icon: Wallet,
-    trend: null,
   },
   {
     title: localization.overview.monthlyIncome,
-    value: "",
+    value: formatCurrency(statsData.monthlyIncome),
     icon: TrendingUp,
-    trend: null,
   },
   {
     title: localization.overview.monthlyExpenses,
-    value: "",
+    value: formatCurrency(statsData.monthlyExpenses),
     icon: TrendingDown,
-    trend: null,
   },
   {
     title: localization.overview.monthlySavings,
-    value: "",
+    value: formatCurrency(statsData.monthlySavings),
     icon: DollarSign,
-    trend: null,
   },
 ];
